@@ -1,0 +1,46 @@
+name: Deploy to Elastic Beanstalk
+
+# Elastic Beanstalk has no native GitHub integration, so this workflow is the
+# deploy trigger: on every push to main, package the source (not build
+# artifacts — the frontend gets built on the instance by
+# .platform/hooks/predeploy) and hand it to Elastic Beanstalk as a new
+# application version.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  EB_APPLICATION_NAME: student-success-platform
+  EB_ENVIRONMENT_NAME: student-success-platform-env
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create deployment package
+        run: |
+          zip -r deploy.zip . \
+            -x '.git/*' \
+            -x '.github/*' \
+            -x 'backend/node_modules/*' \
+            -x 'frontend/node_modules/*' \
+            -x 'frontend/dist/*' \
+            -x '*.log'
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.EB_APPLICATION_NAME }}
+          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
+          version_label: gh-${{ github.run_number }}-${{ github.sha }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: deploy.zip
+          wait_for_environment_recovery: 300

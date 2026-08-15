@@ -1,0 +1,9 @@
+{
+  "name": "student-success-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root manifest for AWS Elastic Beanstalk. The real backend/frontend package.json files still own their own dependencies — this exists so the platform's automatic `npm install` at the deploy root has something valid to run against; the actual install/build happens in .platform/hooks/prebuild.",
+  "scripts": {
+    "start": "node backend/src/server.js"
+  }
+}
