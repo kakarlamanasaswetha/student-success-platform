@@ -14,7 +14,10 @@ npm ci --omit=dev
 
 echo "==> Installing frontend dependencies and building"
 cd "$APP_DIR/frontend"
-npm ci
+# --include=dev overrides NODE_ENV=production (set as an EB env var for the app
+# runtime), which otherwise makes npm silently skip devDependencies — and vite,
+# tailwindcss, postcss, etc. are all devDependencies but required to build.
+npm ci --include=dev
 npm run build
 
 echo "==> predeploy hook complete"
