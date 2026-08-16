@@ -20,8 +20,24 @@ const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
-// Pure JSON API (no HTML views/inline scripts), so a strict default CSP is safe here.
-app.use(helmet());
+// Serves the built frontend too (see the static-serving block below), so helmet's
+// defaults are appropriate here — except upgradeInsecureRequests, which tells the
+// browser to force every subresource (JS/CSS) request to HTTPS even on a plain-HTTP
+// page. This deployment has no TLS anywhere (single EC2 instance, no load balancer/
+// cert), so that directive silently breaks the app: the page itself loads, but every
+// asset request gets refused and React never mounts. Only bites on a real hostname —
+// browsers exempt `localhost` from this behavior, which is why it never showed up
+// in local testing.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        upgradeInsecureRequests: null,
+      },
+    },
+  })
+);
 
 app.use(
   cors({
